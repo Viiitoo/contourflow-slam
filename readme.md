@@ -1,37 +1,67 @@
-# Deform-GS
+<h1 align="center">
+  <picture>
+    <source media="(max-width: 600px)" srcset="docs/assets/deform-gs-mobile.webp">
+    <img src="docs/assets/deform-gs.webp" width="1200" alt="Deform-GS · Endoscopic SLAM. Camera tracking and Gaussian scene reconstruction.">
+  </picture>
+</h1>
 
-Gaussian splatting SLAM for endoscopic sequences, built on S3PO-GS. The baseline estimates camera poses and reconstructs a Gaussian map. The `DeformS3PO` branch adds time-varying Gaussians for deforming scenes.
+<p align="center">
+  <a href="#reconstruction-demo"><b>Watch the reconstruction</b></a> &nbsp;·&nbsp;
+  <a href="#method">Method</a> &nbsp;·&nbsp;
+  <a href="#evaluation">Evaluation</a> &nbsp;·&nbsp;
+  <a href="#quick-start">Run locally</a>
+</p>
 
-[Trajectory demo](#trajectory-demo) · [How it works](#method) · [Run locally](#quick-start) · [Evaluation](#evaluation) · [License](#license)
+Deform-GS follows the endoscope through an image sequence and builds a 3D Gaussian map that can render the scene from the estimated camera poses. The baseline on `main` builds on S3PO-GS. The deformation branch extends the map to tissue that moves over time.
 
-## Trajectory demo
+## Reconstruction demo
 
-![An example StereoMIS camera trajectory in the XY plane. The colored curve is the estimate and the dashed gray curve is the reference.](docs/assets/stereomis-trajectory.png)
+<picture>
+  <source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/stereomis-still.webp">
+  <img src="docs/assets/stereomis-reconstruction.webp" width="888" alt="StereoMIS easy sequence. The input endoscopic image, Gaussian RGB rendering and rendered depth advance together from frame 1 to frame 196.">
+</picture>
 
-This plot comes from one historical baseline run on the StereoMIS easy sequence. The colored curve shows the estimated camera path and the dashed gray curve shows the reference. See the [original run artifact](https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/plot/evo_2dplot_final.png).
+Follow the instrument tip across the three panels. The center rendering captures its motion through the image, while fine tissue texture appears softer than in the input. The depth panel uses a separate grayscale range for each frame.
+
+The loop samples 40 saved views from one baseline run. The cover plots the normalized depth from frame 100 as a relief. [Still comparison](docs/assets/stereomis-still.webp) · [Original frame 100][frame] · [Run configuration][config]
 
 ## Method
 
-```mermaid
-flowchart LR
-    Input["Endoscopic frames"] --> Geometry["MASt3R geometric priors"]
-    Geometry --> Tracking["Camera tracking"]
-    Tracking --> Mapping["Gaussian mapping"]
-    Mapping --> Tracking
-    Tracking --> Traj["Camera trajectory"]
-    Mapping --> Render["Rendered views and Gaussian map"]
-```
-
-The front end uses MASt3R geometry to initialize poses and depth. Tracking refines camera poses against the rendered map, while mapping updates the Gaussian scene model using keyframes. The baseline also includes experimental confidence-weighted depth handling and robust depth fusion.
-
-| Branch | What it contains |
+| Stage | How the map is built |
 | --- | --- |
-| `main` | Baseline tracking and mapping, trajectory export, and rendering evaluation. See the [baseline development notes](https://github.com/Viiitoo/deform-gs/blob/c26ce8bf8526d20436b4864bf84ebcfa36d414ec/readme.md). |
-| [`DeformS3PO`](https://github.com/Viiitoo/deform-gs/tree/DeformS3PO) | Time-dependent deformation using Gaussian radial basis functions. The deformation can update Gaussian position, rotation, scale, and opacity. See the branch README for the formulation and visualization tools. |
+| **Initialize geometry** | MASt3R predicts depth and matches image features across views to initialize the relative camera pose. [Pose initialization](utils/init_pose.py) |
+| **Track the camera** | The front end refines each pose against a rendering of the current map and selects keyframes for mapping. [Tracking loop](utils/slam_frontend.py) |
+| **Update the map** | The back end optimizes the Gaussians over a window of keyframes. Tracking then uses the updated map for subsequent views. [Mapping loop](utils/slam_backend.py) |
+
+**Baseline** · The default branch includes trajectory export, rendering evaluation, and experiments with confidence-weighted depth and robust depth fusion. [Baseline development notes][notes]
+
+**Time-varying deformation** · On `DeformS3PO`, Gaussian radial basis functions model how each point’s position, rotation, scale, and opacity change over time. [Deformation branch and formulation][deform]
+
+## Evaluation
+
+The demo run evaluates the Gaussian map on non-keyframes from `stereo_seq_easy`. Color refinement increased mean PSNR from **24.06 to 28.22 dB** on these views.
+
+| Rendering stage | PSNR ↑ (dB) | SSIM ↑ | LPIPS ↓ |
+| --- | ---: | ---: | ---: |
+| [Before color refinement][before] | 24.06 | 0.763 | 0.629 |
+| [After color refinement][after] | **28.22** | **0.803** | **0.463** |
+
+### Trajectory demo
+
+The estimated camera path had an absolute trajectory error (ATE RMSE) of **0.97 mm** on the nine saved keyframes, after monocular similarity alignment to the reference poses. [Keyframe poses][poses] · [Trajectory statistics][stats]
+
+<details>
+<summary>View the estimated and reference paths in the XY plane</summary>
+
+![XY trajectory of nine StereoMIS keyframes. The colored estimate and the dashed reference are overlaid in meters.](docs/assets/stereomis-trajectory.png)
+
+The color scale shows the translation error at each estimated pose. [Original trajectory plot][plot]
+
+</details>
 
 ## Quick start
 
-The example uses the baseline on `main`. You need an NVIDIA GPU and a CUDA toolchain compatible with the PyTorch build in [`environment.yml`](environment.yml).
+The baseline environment targets Python 3.11, PyTorch 2.1 and CUDA 11.8. Use an NVIDIA GPU and a compatible CUDA toolchain to build the rasterizer and KNN extensions. [Environment specification](environment.yml)
 
 ```bash
 git clone https://github.com/Viiitoo/deform-gs.git
@@ -42,31 +72,29 @@ python -m pip install --no-build-isolation \
     ./submodules/diff-gaussian-rasterization ./submodules/simple-knn
 ```
 
-1. Get the metric checkpoint from [MASt3R](https://github.com/naver/mast3r#checkpoints) and save it as `checkpoints/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric.pth`.
-2. Set `Dataset.dataset_path` in the [StereoMIS easy config](configs/mono/Stereo/Stereo_seq_easy/stereo.yaml) and verify the camera calibration. The [TUM-format loader](utils/dataset.py) expects `rgb.txt`, `depth.txt`, `mono_depth.txt`, and either `groundtruth.txt` or `pose.txt`, plus the files they reference.
-3. Run from the repository root.
+1. **Install the checkpoint.** Save the metric weights to `checkpoints/MASt3R_ViTLarge_BaseDecoder_512_catmlpdpt_metric.pth`. [MASt3R checkpoints][mast3r]
+2. **Point the loader at your sequence.** Set `Dataset.dataset_path` and verify the camera intrinsics in the sequence YAML. The TUM-format loader reads `rgb.txt`, `depth.txt`, `mono_depth.txt`, and either `groundtruth.txt` or `pose.txt`, together with the files they reference. [StereoMIS easy configuration](configs/mono/Stereo/Stereo_seq_easy/stereo.yaml) · [Dataset loader](utils/dataset.py)
+3. **Run from the repository root.**
 
 ```bash
 python slam.py --config configs/mono/Stereo/Stereo_seq_easy/stereo.yaml
 ```
 
-The example configuration writes results to a timestamped directory under `results/`.
-
-## Evaluation
-
-The baseline can save trajectories and evaluate rendered views. Output is controlled by the [sequence configuration](configs/mono/Stereo/Stereo_seq_easy/base_config.yaml) through settings such as `save_trj` and `eval_rendering`. The demo is a single-run illustration. For comparisons, record the commit, sequence and frame range, resolved configuration, and trajectory alignment settings.
-
-| Path | Role |
-| --- | --- |
-| [`slam.py`](slam.py) | SLAM entry point and run configuration |
-| [`utils/`](utils/) | Tracking, mapping, dataset loading, and evaluation |
-| [`gaussian_splatting/`](gaussian_splatting/) | Gaussian representation and rendering |
-| [`configs/mono/`](configs/mono/) | Dataset and sequence configurations |
+The example writes a timestamped run under `results/`. Look in `viz/` for frame comparisons, `plot/` for trajectory evaluation, and `psnr/` for rendering metrics. The sequence settings control which outputs are saved. [Output settings](configs/mono/Stereo/Stereo_seq_easy/base_config.yaml)
 
 ## License
 
-See the repository [MIT License](LICENSE). Third-party code, checkpoints, and datasets are subject to their respective terms.
+The repository uses the MIT License. Third-party code, checkpoints and datasets retain their own terms. [License](LICENSE)
 
-## Acknowledgements
+The baseline builds on S3PO-GS and MASt3R. The time-varying branch draws on EH-SurGS. [S3PO-GS](https://github.com/3DAgentWorld/S3PO-GS) · [MASt3R](https://github.com/naver/mast3r) · [EH-SurGS](https://github.com/IRMVLab/EH-SurGS)
 
-The project builds on S3PO-GS and uses [MASt3R](https://github.com/naver/mast3r) for geometric priors. The `DeformS3PO` branch draws on EH-SurGS for time-varying deformation.
+[notes]: https://github.com/Viiitoo/deform-gs/blob/c26ce8bf8526d20436b4864bf84ebcfa36d414ec/readme.md
+[deform]: https://github.com/Viiitoo/deform-gs/tree/DeformS3PO
+[mast3r]: https://github.com/naver/mast3r#checkpoints
+[config]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/config.yml
+[frame]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/viz/100.png
+[before]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/psnr/before_opt/final_result.json
+[after]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/psnr/after_opt/final_result.json
+[poses]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/plot/trj_final.json
+[stats]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/plot/stats_final.json
+[plot]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/plot/evo_2dplot_final.png
