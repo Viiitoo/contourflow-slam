@@ -1,7 +1,7 @@
 <h1 align="center">
   <picture>
-    <source media="(max-width: 600px)" srcset="docs/assets/deform-gs-mobile.webp">
-    <img src="docs/assets/deform-gs.webp" width="1200" alt="Deform-GS · Endoscopic SLAM. Camera tracking and Gaussian scene reconstruction.">
+    <source media="(max-width: 600px)" srcset="docs/assets/contourflow-slam-mobile.webp">
+    <img src="docs/assets/contourflow-slam.webp" width="1200" alt="ContourFlow-SLAM · Endoscopic SLAM. Camera tracking and Gaussian scene reconstruction.">
   </picture>
 </h1>
 
@@ -12,7 +12,9 @@
   <a href="#quick-start">Run locally</a>
 </p>
 
-Deform-GS follows the endoscope through an image sequence and builds a 3D Gaussian map that can render the scene from the estimated camera poses. The baseline on `main` builds on S3PO-GS. The deformation branch extends the map to tissue that moves over time.
+**ContourFlow-SLAM** — Gaussian SLAM for deformable endoscopic scenes with contour-guided camera tracking and optical flow supervision.
+
+The S3PO-GS baseline on `main` tracks the endoscope and builds the Gaussian map shown below. The [contour and flow experiments][contour-flow] use 3D contours to guide camera pose estimation and optical flow between keyframes to supervise the deforming map.
 
 ## Reconstruction demo
 
@@ -64,8 +66,8 @@ The color scale shows the translation error at each estimated pose. [Original tr
 The baseline environment targets Python 3.11, PyTorch 2.1 and CUDA 11.8. Use an NVIDIA GPU and a compatible CUDA toolchain to build the rasterizer and KNN extensions. [Environment specification](environment.yml)
 
 ```bash
-git clone https://github.com/Viiitoo/deform-gs.git
-cd deform-gs
+git clone https://github.com/Viiitoo/deform-gs.git contourflow-slam
+cd contourflow-slam
 conda env create -f environment.yml
 conda activate S3PO-GS
 python -m pip install --no-build-isolation \
@@ -89,6 +91,7 @@ The repository uses the MIT License. Third-party code, checkpoints and datasets 
 The baseline builds on S3PO-GS and MASt3R. The time-varying branch draws on EH-SurGS. [S3PO-GS](https://github.com/3DAgentWorld/S3PO-GS) · [MASt3R](https://github.com/naver/mast3r) · [EH-SurGS](https://github.com/IRMVLab/EH-SurGS)
 
 [notes]: https://github.com/Viiitoo/deform-gs/blob/c26ce8bf8526d20436b4864bf84ebcfa36d414ec/readme.md
+[contour-flow]: https://github.com/Viiitoo/deform-gs/blob/contour-extraction/docs/version_stereo_full.md
 [deform]: https://github.com/Viiitoo/deform-gs/tree/DeformS3PO
 [mast3r]: https://github.com/naver/mast3r#checkpoints
 [config]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/config.yml
