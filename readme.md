@@ -66,7 +66,7 @@ The color scale shows the translation error at each estimated pose. [Original tr
 The baseline environment targets Python 3.11, PyTorch 2.1 and CUDA 11.8. Use an NVIDIA GPU and a compatible CUDA toolchain to build the rasterizer and KNN extensions. [Environment specification](environment.yml)
 
 ```bash
-git clone https://github.com/Viiitoo/deform-gs.git contourflow-slam
+git clone https://github.com/Viiitoo/contourflow-slam.git
 cd contourflow-slam
 conda env create -f environment.yml
 conda activate S3PO-GS
@@ -90,14 +90,14 @@ The repository uses the MIT License. Third-party code, checkpoints and datasets 
 
 The baseline builds on S3PO-GS and MASt3R. The time-varying branch draws on EH-SurGS. [S3PO-GS](https://github.com/3DAgentWorld/S3PO-GS) · [MASt3R](https://github.com/naver/mast3r) · [EH-SurGS](https://github.com/IRMVLab/EH-SurGS)
 
-[notes]: https://github.com/Viiitoo/deform-gs/blob/c26ce8bf8526d20436b4864bf84ebcfa36d414ec/readme.md
-[contour-flow]: https://github.com/Viiitoo/deform-gs/blob/contour-extraction/docs/version_stereo_full.md
-[deform]: https://github.com/Viiitoo/deform-gs/tree/DeformS3PO
+[notes]: https://github.com/Viiitoo/contourflow-slam/blob/c26ce8bf8526d20436b4864bf84ebcfa36d414ec/readme.md
+[contour-flow]: https://github.com/Viiitoo/contourflow-slam/blob/contour-extraction/docs/version_stereo_full.md
+[deform]: https://github.com/Viiitoo/contourflow-slam/tree/DeformS3PO
 [mast3r]: https://github.com/naver/mast3r#checkpoints
-[config]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/config.yml
-[frame]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/viz/100.png
-[before]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/psnr/before_opt/final_result.json
-[after]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/psnr/after_opt/final_result.json
-[poses]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/plot/trj_final.json
-[stats]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/plot/stats_final.json
-[plot]: https://github.com/Viiitoo/deform-gs/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/plot/evo_2dplot_final.png
+[config]: https://github.com/Viiitoo/contourflow-slam/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/config.yml
+[frame]: https://github.com/Viiitoo/contourflow-slam/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/viz/100.png
+[before]: https://github.com/Viiitoo/contourflow-slam/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/psnr/before_opt/final_result.json
+[after]: https://github.com/Viiitoo/contourflow-slam/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/psnr/after_opt/final_result.json
+[poses]: https://github.com/Viiitoo/contourflow-slam/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/plot/trj_final.json
+[stats]: https://github.com/Viiitoo/contourflow-slam/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/plot/stats_final.json
+[plot]: https://github.com/Viiitoo/contourflow-slam/blob/85194a5e38d5af5d09b18af97dbcb9606ccc2341/results/stereo_seq_easy_stereo_seq_easy/2025-12-03-22-02-13/plot/evo_2dplot_final.png
